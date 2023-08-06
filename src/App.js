@@ -8,14 +8,17 @@ export default function App() {
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("EUR");
   const [result, setResult] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(
     function () {
       const controller = new AbortController();
       async function fetchData() {
+        setIsLoading(true);
         setError("");
         try {
           if (fromCurrency === toCurrency) {
+            setResult(query);
             throw new Error("Choose different type of currency.");
           }
           const response = await fetch(
@@ -33,6 +36,8 @@ export default function App() {
           if (err.name !== "AbortError") {
             setError(err);
           }
+        } finally {
+          setIsLoading(false);
         }
       }
       fetchData();
@@ -49,10 +54,12 @@ export default function App() {
         type="text"
         value={query}
         onChange={(e) => setQuery(Number(e.target.value))}
+        disabled={isLoading}
       />
       <select
         value={fromCurrency}
         onChange={(e) => setFromCurrency(e.target.value)}
+        disabled={isLoading}
       >
         <option value="USD">USD</option>
         <option value="EUR">EUR</option>
@@ -62,6 +69,7 @@ export default function App() {
       <select
         value={toCurrency}
         onChange={(e) => setToCurrency(e.target.value)}
+        disabled={isLoading}
       >
         <option value="USD">USD</option>
         <option value="EUR">EUR</option>
@@ -76,7 +84,15 @@ export default function App() {
           </strong>
         </p>
       )}
-      {error && <p>Error : {error.message}</p>}
+      {error.message === "Choose different type of currency." && (
+        <p>
+          OUTPUT : {query} {fromCurrency} is{" "}
+          <strong>
+            {result} {toCurrency}
+          </strong>
+        </p>
+      )}
+      {error && <p>{error.message}</p>}
     </div>
   );
 }
