@@ -1,25 +1,83 @@
-import logo from './logo.svg';
-import './App.css';
+// `https://api.frankfurter.app/latest?amount=100&from=EUR&to=USD`
 
-function App() {
+import { useEffect, useState } from "react";
+
+export default function App() {
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("100");
+  const [fromCurrency, setFromCurrency] = useState("USD");
+  const [toCurrency, setToCurrency] = useState("EUR");
+  const [result, setResult] = useState("");
+
+  useEffect(
+    function () {
+      const controller = new AbortController();
+      async function fetchData() {
+        setError("");
+        try {
+          if (fromCurrency === toCurrency) {
+            throw new Error("Choose different type of currency.");
+          }
+          const response = await fetch(
+            `https://api.frankfurter.app/latest?amount=${query}&from=${fromCurrency}&to=${toCurrency}`,
+            { signal: controller.signal }
+          );
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error("Something went wrong with fetching movies");
+          }
+          console.log(data);
+          console.log(data["rates"][toCurrency]);
+          setResult(data["rates"][toCurrency]);
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            setError(err);
+          }
+        }
+      }
+      fetchData();
+      return function () {
+        controller.abort();
+      };
+    },
+    [query, fromCurrency, toCurrency]
+  );
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+    <div>
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(Number(e.target.value))}
+      />
+      <select
+        value={fromCurrency}
+        onChange={(e) => setFromCurrency(e.target.value)}
+      >
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="CAD">CAD</option>
+        <option value="INR">INR</option>
+      </select>
+      <select
+        value={toCurrency}
+        onChange={(e) => setToCurrency(e.target.value)}
+      >
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="CAD">CAD</option>
+        <option value="INR">INR</option>
+      </select>
+      {!error && (
         <p>
-          Edit <code>src/App.js</code> and save to reload.
+          OUTPUT : {query} {fromCurrency} is{" "}
+          <strong>
+            {result} {toCurrency}
+          </strong>
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      )}
+      {error && <p>Error : {error.message}</p>}
     </div>
   );
 }
-
-export default App;
+//`https://api.frankfurter.app/latest?amount=${query}&from=${fromCurrency}&to=${toCurrency}`;
